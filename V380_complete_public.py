@@ -4,6 +4,7 @@ import requests
 import getch
 from time import sleep
 import cv2
+import sys
 
 public_ip = "192.168.2.110"
 onvif_port = 8899  # 80
@@ -19,12 +20,21 @@ cv2.namedWindow("test")
 
 img_counter = 0
 
+def read_file(f):
+    with open(f) as xml:
+        return xml
+
 # Set the name of the XML file.
-xml_up = "postup.xml"
-xml_down = "postdown.xml"
-xml_left = "postleft.xml"
-xml_right = "postright.xml"
-xml_stop = "poststop.xml"
+xml_docs = {
+    k: read_file(v) for k, v in [ 
+        (105, "postup.xml"),  # i
+        (44, "postdown.xml"),  # ,(comma) 
+        (106, "postleft.xml"),  # j
+        (108, "postright.xml"),  # l
+        (107, "poststop.xml"),  # k
+    ]
+}
+
 
 headers = {'Content-Type':'text/xml'}
 while True:
@@ -32,62 +42,32 @@ while True:
     cv2.imshow("test", frame)
     if not ret:
         break
-    k = cv2.waitKey(1)
+    k = cv2.waitKey(1) % 256
 
-    if k%256 == 27:
+    if k == 27:
         # ESC pressed
         print("Escape hit, closing...")
         break
-    elif k%256 == 32:
+    elif k == 32:
         # SPACE pressed
         img_name = "opencv_frame_{}.png".format(img_counter)
         cv2.imwrite(img_name, frame)
         print("{} written!".format(img_name))
         img_counter += 1
+    else:
+        xml = xml_docs.get(k)
+        if not xml:
+            print(
+                "Press one of (i/,/j/l/k/[SPACE]/[ESC])"
+                " for (up/down/left/right/stop/[write-png]/[exit]), respectively",
+                file=sys.stderr
+            )
+            continue
 
-    elif k%256 == 105:
-        with open(xml_up) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-        sleep(0.5)
-        with open(xml_stop) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-
-    elif k%256 == 44:
-        with open(xml_down) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-
-        sleep(0.5)
-        with open(xml_stop) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-
-    elif (k%256 == 106):
-        with open(xml_left) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-
-        sleep(0.5)
-        with open(xml_stop) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-
-    elif (k%256 == 108):
-        with open(xml_right) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-
-        sleep(0.5)
-        with open(xml_stop) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
-
-    elif (k%256 == 107):
-        with open(xml_stop) as xml:
-            # Give the object representing the XML file to requests.post.
-                r = requests.post(ptz_url, data=xml)
+        r = requests.post(ptz_url, data=xml)
+        if k != 107:  # don't re-send stop
+            sleep(0.5)
+            r = requests.post(ptz_url, data=xml_docs[107])
 
 
 cam.release()
