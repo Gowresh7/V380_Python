@@ -9,7 +9,7 @@ public_ip = "192.168.2.110"
 onvif_port = 8899  # 80
 username = "admin"
 password = "admin7"
-
+ptz_duration = 0.5  # sec
 rtsp_url = "rtsp://%s:%s@%s:554/live/ch00_0" % (username, password, public_ip)
 ptz_url = "http://%s:%s/onvif/ptz" % (public_ip, onvif_port)
 
@@ -69,7 +69,7 @@ while True:
 
         r = requests.post(ptz_url, data=xml)
         if k != 107:  # don't re-send stop
-            sleep(0.5)
+            sleep(ptz_duration)
             r = requests.post(ptz_url, data=xml_docs[107])
 
 
