@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import requests
-import getch
 from time import sleep
 import cv2
 import sys
@@ -22,13 +21,13 @@ img_counter = 0
 
 def read_file(f):
     with open(f) as xml:
-        return xml
+        return xml.read()
 
 # Set the name of the XML file.
 xml_docs = {
-    k: read_file(v) for k, v in [ 
+    k: read_file(v) for k, v in [
         (105, "postup.xml"),  # i
-        (44, "postdown.xml"),  # ,(comma) 
+        (44, "postdown.xml"),  # ,(comma)
         (106, "postleft.xml"),  # j
         (108, "postright.xml"),  # l
         (107, "poststop.xml"),  # k
@@ -54,11 +53,15 @@ while True:
         cv2.imwrite(img_name, frame)
         print("{} written!".format(img_name))
         img_counter += 1
+    elif k == 255:
+        continue
     else:
         xml = xml_docs.get(k)
         if not xml:
             print(
-                "Press one of (i/,/j/l/k/[SPACE]/[ESC])"
+                "Invalid key:",
+                chr(k),
+                "\nPress one of (i/,/j/l/k/[SPACE]/[ESC])"
                 " for (up/down/left/right/stop/[write-png]/[exit]), respectively",
                 file=sys.stderr
             )
